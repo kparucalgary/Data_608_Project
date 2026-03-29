@@ -54,7 +54,7 @@ client = OpenSearch(
 model = SentenceTransformer(MODEL_NAME)
 
 
-def run_search(query: str, top_k: int = 5):
+def run_search(query: str, top_k: int = 5) -> None:
     # Step 1: embed query
     query_vector = model.encode(
         query,
@@ -116,7 +116,7 @@ if submitted:
     if query.strip():
 
         # Log the query to S3
-        log_query_to_s3(query)
+        log_query_to_s3(query, result_count)
 
         # Run the search
         results = run_search(query, top_k=result_count)
