@@ -12,13 +12,14 @@ from sentence_transformers import SentenceTransformer
 BUCKET_NAME = "data608-arxiv-logs-s3"
 QUERY_LOG_PREFIX = "query-logs/"
 
-def log_query_to_s3(query: str) -> None:
+def log_query_to_s3(query: str, top_k: int) -> None:
     s3 = boto3.client("s3")
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ") # Zulu(UTC) timestamp
 
     payload = {
         "query": query,
-        "timestamp": timestamp
+        "timestamp": timestamp,
+        "top_k": top_k
     }
 
     s3.put_object(
@@ -104,14 +105,20 @@ st.write("Enter a research topic to search for semantically relevant papers.")
 # User Input
 query = st.text_input("Search query")
 
+result_count = st.selectbox(
+    "Number of results",
+    options=[5, 10, 20, 30],
+    index=0
+)
+
 if st.button("Search"):
     if query.strip():
 
         # Log the query to S3
-        log_query_to_s3(query)
+        log_query_to_s3(query, result_count)
 
         # Run the search
-        results = run_search(query)
+        results = run_search(query, top_k=result_count)
 
         # Display the results   
         st.subheader("Results")
