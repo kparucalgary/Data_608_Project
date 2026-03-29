@@ -101,26 +101,27 @@ st.set_page_config(page_title="arXiv Semantic Search", layout="wide")
 st.title("arXiv Semantic Search Assistant")
 st.write("Enter a research topic to search for semantically relevant papers.")
 
+with st.form("search_form"):
+    query = st.text_input("Search query")
 
-# User Input
-query = st.text_input("Search query")
+    result_count = st.selectbox(
+        "Number of results",
+        options=[5, 10, 20, 30],
+        index=0
+    )
 
-result_count = st.selectbox(
-    "Number of results",
-    options=[5, 10, 20, 30],
-    index=0
-)
+    submitted = st.form_submit_button("Search")
 
-if st.button("Search"):
+if submitted:
     if query.strip():
 
         # Log the query to S3
-        log_query_to_s3(query, result_count)
+        log_query_to_s3(query)
 
         # Run the search
         results = run_search(query, top_k=result_count)
 
-        # Display the results   
+        # Display the results
         st.subheader("Results")
         for i, paper in enumerate(results, start=1):
             st.markdown(f"### {i}. {paper['title']}")
