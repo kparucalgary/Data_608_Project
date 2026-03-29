@@ -85,7 +85,6 @@ def run_search(query: str, top_k: int = 5) -> None:
 
         results.append({
             "title": src.get("title"),
-            "authors": [],  # optional for now
             "abstract": src.get("abstract"),
             "url": src.get("link"),
         })
@@ -125,7 +124,6 @@ if submitted:
         st.subheader("Results")
         for i, paper in enumerate(results, start=1):
             st.markdown(f"### {i}. {paper['title']}")
-            st.write("**Authors:**", ", ".join(paper["authors"]))
             st.write("**Abstract:**", paper["abstract"])
             st.markdown(f"[Open paper]({paper['url']})")
             st.markdown("---")
