@@ -4,6 +4,9 @@ from datetime import datetime, timezone
 import boto3
 import streamlit as st
 
+from opensearchpy import OpenSearch
+from sentence_transformers import SentenceTransformer
+
 
 # --- S3 Configuration ---
 BUCKET_NAME = "data608-arxiv-logs-s3"
@@ -25,31 +28,68 @@ def log_query_to_s3(query: str) -> None:
         ContentType="application/json" # tells AWS S3 that the body is a JSON object
     )
 
-'''
-Currently a placeholder function for the search functionality
 
-Eventual Replacement:
 
-1. 'sentence-transformers': Use a model to convert 'query' into a vector embedding.
-2. 'OpenSearch': Send that vector to your OpenSearch cluster to 'Retrieve Relevant Papers'.
-3. Return the actual metadata (title, URL, abstract) stored in your OpenSearch index.
-'''
-def run_search(query: str):
-    return [
-        {
-            "title": "Placeholder Paper 1",
-            "authors": ["Author A", "Author B"],
-            "abstract": f"This is a placeholder result for query: {query}",
-            "url": "https://arxiv.org"
-        },
-        {
-            "title": "Placeholder Paper 2",
-            "authors": ["Author C"],
-            "abstract": "Another placeholder abstract until backend integration is ready.",
-            "url": "https://arxiv.org"
+# --- OpenSearch Configuration ---
+HOST = "localhost"
+PORT = 9200
+USERNAME = "admin"
+PASSWORD = "data608ML!!!"
+
+INDEX_NAME = "arxiv-papers"
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+
+
+# Initialize OpenSearch client
+client = OpenSearch(
+    hosts=[{"host": HOST, "port": PORT}],
+    http_auth=(USERNAME, PASSWORD),
+    use_ssl=True,
+    verify_certs=False,
+    ssl_assert_hostname=False,
+    ssl_show_warn=False,
+)
+
+model = SentenceTransformer(MODEL_NAME)
+
+
+def run_search(query: str, top_k: int = 5):
+    # Step 1: embed query
+    query_vector = model.encode(
+        query,
+        convert_to_numpy=True,
+        normalize_embeddings=True
+    ).tolist()
+
+    # Step 2: search OpenSearch
+    body = {
+        "size": top_k,
+        "_source": ["title", "abstract", "link"],
+        "query": {
+            "knn": {
+                "embedding": {
+                    "vector": query_vector,
+                    "k": top_k
+                }
+            }
         }
-    ]
+    }
 
+    response = client.search(index=INDEX_NAME, body=body)
+
+    # Step 3: format results for Streamlit
+    results = []
+    for hit in response["hits"]["hits"]:
+        src = hit["_source"]
+
+        results.append({
+            "title": src.get("title"),
+            "authors": [],  # optional for now
+            "abstract": src.get("abstract"),
+            "url": src.get("link"),
+        })
+
+    return results
 
 
 
