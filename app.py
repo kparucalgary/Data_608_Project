@@ -4,9 +4,10 @@ from datetime import datetime, timezone
 import boto3
 import streamlit as st
 
+
+# --- S3 Configuration ---
 BUCKET_NAME = "data608-arxiv-logs-s3"
 QUERY_LOG_PREFIX = "query-logs/"
-
 
 def log_query_to_s3(query: str) -> None:
     s3 = boto3.client("s3")
@@ -24,7 +25,15 @@ def log_query_to_s3(query: str) -> None:
         ContentType="application/json"
     )
 
+'''
+Currently a placeholder function for the search functionality
 
+Eventual Replacement:
+
+1. 'sentence-transformers': Use a model to convert 'query' into a vector embedding.
+2. 'OpenSearch': Send that vector to your OpenSearch cluster to 'Retrieve Relevant Papers'.
+3. Return the actual metadata (title, URL, abstract) stored in your OpenSearch index.
+'''
 def run_search(query: str):
     return [
         {
@@ -42,18 +51,29 @@ def run_search(query: str):
     ]
 
 
+
+
+
+# --- Streamlit UI ---
 st.set_page_config(page_title="arXiv Semantic Search", layout="wide")
 
 st.title("arXiv Semantic Search Assistant")
 st.write("Enter a research topic to search for semantically relevant papers.")
 
+
+# User Input
 query = st.text_input("Search query")
 
 if st.button("Search"):
     if query.strip():
+
+        # Log the query to S3
         log_query_to_s3(query)
+
+        # Run the search
         results = run_search(query)
 
+        # Display the results   
         st.subheader("Results")
         for i, paper in enumerate(results, start=1):
             st.markdown(f"### {i}. {paper['title']}")
