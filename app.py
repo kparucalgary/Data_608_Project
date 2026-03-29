@@ -11,7 +11,7 @@ QUERY_LOG_PREFIX = "query-logs/"
 
 def log_query_to_s3(query: str) -> None:
     s3 = boto3.client("s3")
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ")
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ") # Zulu(UTC) timestamp
 
     payload = {
         "query": query,
@@ -21,8 +21,8 @@ def log_query_to_s3(query: str) -> None:
     s3.put_object(
         Bucket=BUCKET_NAME,
         Key=f"{QUERY_LOG_PREFIX}query_{timestamp}.json",
-        Body=json.dumps(payload, indent=2),
-        ContentType="application/json"
+        Body=json.dumps(payload, indent=2), # Indent 2 spaces for readability
+        ContentType="application/json" # tells AWS S3 that the body is a JSON object
     )
 
 '''
