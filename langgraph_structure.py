@@ -174,7 +174,12 @@ def retrieveNode(state: GraphState) -> GraphState:
             
         
         results = run_ondemand_pipeline(queryret)
-    state['titles'] = [i['title'] for i in results]
+
+    try:
+        state['titles'] = [i['title'] for i in results]
+    except TypeError:
+        raise Exception(f"Error: {results}")
+        state['titles'] = []
     state['abstracts'] = [i['abstract'] for i in results]
     state['links'] = [i['link'] for i in results]
     state['scores'] = [i['score'] for i in results]
