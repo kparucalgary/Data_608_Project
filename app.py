@@ -73,7 +73,7 @@ with st.form("search_form"):
     )
     threshold = st.selectbox(
         "Similarity Threshold",
-        options=[0.5, 0.6, 0.7, 0.8, 0.9],
+        options=[0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7],
         index=0
     )
 

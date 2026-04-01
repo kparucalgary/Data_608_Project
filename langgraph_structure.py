@@ -87,7 +87,16 @@ def retrieveNode(state: GraphState) -> GraphState:
         
     if retry == 0:
         results = semantic_search(query, top_k=state["numpapers"])
-        state['links'] = [i['link'] for i in results]
+        if len(results) > 0:
+            state['links'] = [i['link'] for i in results]
+            state['titles'] = [i['title'] for i in results]
+            state['abstracts'] = [i['abstract'] for i in results]
+            state['scores'] = [i['score'] for i in results]
+        else:
+            state['links'] = []
+            state['titles'] = []
+            state['abstracts'] = []
+            state['scores'] = []
     else:
         # progressively broader retrieval
         if retry == 1:
@@ -176,11 +185,14 @@ def retrieveNode(state: GraphState) -> GraphState:
         
         results = run_ondemand_pipeline(queryret)
         results = results['results']
-        state['links'] = [i['url'] for i in results]
+        for i in results:
+            if i['title'] not in state['titles']:
+                state['scores'].append(i['score'])
+                state['titles'].append(i['title'])
+                state['abstracts'].append(i['abstract'])
+                state['links'].append(i['url'])
 
-    state['titles'] = [i['title'] for i in results]
-    state['abstracts'] = [i['abstract'] for i in results]
-    state['scores'] = [i['score'] for i in results]
+    
     
     return {
         **state,
@@ -192,6 +204,8 @@ def checkRelevantPapers(state: GraphState) -> GraphState:
     scores = np.array(state["scores"])
     num_above = np.sum(scores >= threshold) # number of papers above threshold
     
+
+
     if num_above >= numpapers:
         return {**state, "message": "Enough Papers"}
     
