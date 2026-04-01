@@ -10,7 +10,7 @@ from typing import TypedDict, Literal, List
 from langgraph.graph import StateGraph, END
 import numpy as np
 from search_test import semantic_search
-from on_demand_pipeline import run_on_demand_pipeline
+from on_demand_pipeline import run_ondemand_pipeline
 from langchain_ollama import ChatOllama
 
 # Initialize Gemma 3
@@ -87,7 +87,7 @@ def retrieveNode(state: GraphState) -> GraphState:
     assert retry==0
     
     if retry == 0:
-        results = semantic_search(query)
+        results = semantic_search(query, top_k=state["numpapers"])
     else:
         # progressively broader retrieval
         if retry == 1:
@@ -174,7 +174,7 @@ def retrieveNode(state: GraphState) -> GraphState:
             state['queryret3'] = queryret
             
         
-        results = run_on_demand_pipeline(queryret)
+        results = run_ondemand_pipeline(queryret)
     state['titles'] = [i['title'] for i in results]
     state['abstracts'] = [i['abstract'] for i in results]
     state['links'] = [i['link'] for i in results]
@@ -187,9 +187,8 @@ def retrieveNode(state: GraphState) -> GraphState:
 def checkRelevantPapers(state: GraphState) -> GraphState:
     threshold = state["threshold"]
     numpapers = state["numpapers"]
-    scores = state["scores"]
-    
-    num_above = np.sum(scores >= threshold)
+    scores = np.array(state["scores"])
+    num_above = np.sum(scores >= threshold) # number of papers above threshold
     
     if num_above >= numpapers:
         return {**state, "message": "Enough Papers"}
@@ -291,7 +290,7 @@ builder.set_finish_point("synthesize")
 
 graph = builder.compile()
 
-def run_pipeline(graph, query: str, mode: str, numpapers: int, threshold: float):
+def run_pipeline(query: str, mode: str, numpapers: int, threshold: float):
     initial_state = {
         "mode": mode,
         "query": query,
