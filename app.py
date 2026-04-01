@@ -86,7 +86,7 @@ if submitted:
         log_query_to_s3(query, result_count, threshold)
 
         # Run the search
-        results = run_pipeline(mode='llm', query=query, numpapers=result_count, threshold=threshold)
+        results = run_pipeline(mode='mvp', query=query, numpapers=result_count, threshold=threshold)
         #results = run_search(query, top_k=result_count)
 
         # Display the results
