@@ -94,7 +94,7 @@ if submitted:
         for i, paper in enumerate(results, start=1):
             st.markdown(f"### {i}. {paper['title']}")
             st.write("**Abstract:**", paper["abstract"])
-            st.markdown(f"[Open paper]({paper['url']})")
+            st.markdown(f"[Open paper]({paper['link']})")
             st.markdown("---")
     else:
         st.warning("Please enter a query.")
