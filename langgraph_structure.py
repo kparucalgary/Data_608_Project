@@ -84,8 +84,7 @@ def queryNode(state: GraphState) -> GraphState:
 def retrieveNode(state: GraphState) -> GraphState:
     retry = state["retry_count"]
     query = state["modified_query"]
-    assert retry==0
-    
+        
     if retry == 0:
         results = semantic_search(query, top_k=state["numpapers"])
     else:
