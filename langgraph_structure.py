@@ -87,6 +87,7 @@ def retrieveNode(state: GraphState) -> GraphState:
         
     if retry == 0:
         results = semantic_search(query, top_k=state["numpapers"])
+        state['links'] = [i['link'] for i in results]
     else:
         # progressively broader retrieval
         if retry == 1:
@@ -174,14 +175,11 @@ def retrieveNode(state: GraphState) -> GraphState:
             
         
         results = run_ondemand_pipeline(queryret)
+        results = results['results']
+        state['links'] = [i['url'] for i in results]
 
-    try:
-        state['titles'] = [i['title'] for i in results]
-    except TypeError:
-        raise Exception(f"Error: {results}")
-        state['titles'] = []
+    state['titles'] = [i['title'] for i in results]
     state['abstracts'] = [i['abstract'] for i in results]
-    state['links'] = [i['link'] for i in results]
     state['scores'] = [i['score'] for i in results]
     
     return {
@@ -247,6 +245,8 @@ def synthesisNode(state: GraphState) -> GraphState:
     )
 
     # Select top-k
+    if len(filtered) == 0:
+        return {**state, "final_output": [{'title': 'No results found', 'link': '', 'abstract': ''}]}
     if k > len(filtered):
         top_papers = sorted_papers[:k]
     else:
