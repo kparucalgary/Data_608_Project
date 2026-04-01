@@ -10,6 +10,7 @@ from typing import TypedDict, Literal, List
 from langgraph.graph import StateGraph, END
 import numpy as np
 from search_test import semantic_search
+from on_demand_pipeline import run_on_demand_pipeline
 from langchain_ollama import ChatOllama
 
 # Initialize Gemma 3
@@ -86,7 +87,7 @@ def retrieveNode(state: GraphState) -> GraphState:
     assert retry==0
     
     if retry == 0:
-        pass
+        results = semantic_search(query)
     else:
         # progressively broader retrieval
         if retry == 1:
@@ -173,7 +174,7 @@ def retrieveNode(state: GraphState) -> GraphState:
             state['queryret3'] = queryret
             
         
-    results = semantic_search(queryret)
+        results = run_on_demand_pipeline(queryret)
     state['titles'] = [i['title'] for i in results]
     state['abstracts'] = [i['abstract'] for i in results]
     state['links'] = [i['link'] for i in results]
