@@ -6,20 +6,22 @@ import streamlit as st
 
 from opensearchpy import OpenSearch
 from sentence_transformers import SentenceTransformer
+from langgraph_structure import run_pipeline
 
 
 # --- S3 Configuration ---
 BUCKET_NAME = "data608-arxiv-logs-s3"
 QUERY_LOG_PREFIX = "query-logs/"
 
-def log_query_to_s3(query: str, top_k: int) -> None:
+def log_query_to_s3(query: str, result_count: int, threshold: float) -> None:
     s3 = boto3.client("s3")
     timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H-%M-%SZ") # Zulu(UTC) timestamp
 
     payload = {
         "query": query,
         "timestamp": timestamp,
-        "top_k": top_k
+        "result_count": result_count,
+        "threshold": threshold
     }
 
     s3.put_object(
@@ -52,7 +54,7 @@ client = OpenSearch(
 )
 
 model = SentenceTransformer(MODEL_NAME)
-
+'''
 
 def run_search(query: str, top_k: int = 5) -> None:
     # Step 1: embed query
@@ -91,7 +93,7 @@ def run_search(query: str, top_k: int = 5) -> None:
 
     return results
 
-
+'''
 
 
 # --- Streamlit UI ---
@@ -108,6 +110,11 @@ with st.form("search_form"):
         options=[5, 10, 20, 30],
         index=0
     )
+    threshold = st.selectbox(
+        "Number of results",
+        options=[0.5, 0.6, 0.7, 0.8, 0.9],
+        index=0
+    )
 
     submitted = st.form_submit_button("Search")
 
@@ -118,7 +125,8 @@ if submitted:
         log_query_to_s3(query, result_count)
 
         # Run the search
-        results = run_search(query, top_k=result_count)
+        results = run_pipeline(mode='llm', query=query, numpapers=result_count, threshold=threshold)
+        #results = run_search(query, top_k=result_count)
 
         # Display the results
         st.subheader("Results")
