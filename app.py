@@ -54,46 +54,7 @@ client = OpenSearch(
 )
 
 model = SentenceTransformer(MODEL_NAME)
-'''
 
-def run_search(query: str, top_k: int = 5) -> None:
-    # Step 1: embed query
-    query_vector = model.encode(
-        query,
-        convert_to_numpy=True,
-        normalize_embeddings=True
-    ).tolist()
-
-    # Step 2: search OpenSearch
-    body = {
-        "size": top_k,
-        "_source": ["title", "abstract", "link"],
-        "query": {
-            "knn": {
-                "embedding": {
-                    "vector": query_vector,
-                    "k": top_k
-                }
-            }
-        }
-    }
-
-    response = client.search(index=INDEX_NAME, body=body)
-
-    # Step 3: format results for Streamlit
-    results = []
-    for hit in response["hits"]["hits"]:
-        src = hit["_source"]
-
-        results.append({
-            "title": src.get("title"),
-            "abstract": src.get("abstract"),
-            "url": src.get("link"),
-        })
-
-    return results
-
-'''
 
 
 # --- Streamlit UI ---
@@ -122,7 +83,7 @@ if submitted:
     if query.strip():
 
         # Log the query to S3
-        log_query_to_s3(query, result_count)
+        log_query_to_s3(query, result_count, threshold)
 
         # Run the search
         results = run_pipeline(mode='llm', query=query, numpapers=result_count, threshold=threshold)
