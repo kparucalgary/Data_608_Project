@@ -149,7 +149,7 @@ def retrieveNode(state: GraphState) -> GraphState:
                                         state['queryret1'])
                 queryret = queryret.content
             else:
-                queryret = query.split().join(' OR ')
+                queryret = ' OR '.join(query.split())
             state['queryret2'] = queryret
             
         
