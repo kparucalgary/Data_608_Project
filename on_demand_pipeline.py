@@ -387,6 +387,7 @@ def collect_ondemand_records(max_records, until_date, bucket_name, search_query)
     resumption_token = None
     page_num = 0
     url = build_arxiv_url(search_query, max_records)
+    print(f"DEBUG URL: {url}")
     with urllib.request.urlopen(url) as f:
         xml = f.read()
         
