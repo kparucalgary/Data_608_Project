@@ -160,7 +160,7 @@ def retrieveNode(state: GraphState) -> GraphState:
                 state['scores'].append(i['score'])
                 state['titles'].append(i['title'])
                 state['abstracts'].append(i['abstract'])
-                state['links'].append(i['url'])
+                state['links'].append(i['link'])
 
     
     

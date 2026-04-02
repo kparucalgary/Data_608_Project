@@ -188,7 +188,7 @@ def parse_arxiv_atom(xml: str):
             for c in entry.findall("atom:category", ns)
         ]
         created = entry.findtext('atom:updated', default="", namespaces=ns).strip()
-        papers.append({'arxiv_id': arxiv_id, 'title': title, 'abstract': abstract, 'url': f"https://arxiv.org/abs/{arxiv_id}", 'categories': categories, 'created': created })
+        papers.append({'arxiv_id': arxiv_id, 'title': title, 'abstract': abstract, 'link': f"https://arxiv.org/abs/{arxiv_id}", 'categories': categories, 'created': created })
     return papers
 
 
@@ -353,7 +353,7 @@ def format_hits_for_app(hits):
             "title": hit.get("title"),
             "authors": [],
             "abstract": hit.get("abstract"),
-            "url": hit.get("link"),
+            "link": hit.get("link"),
             "score": hit.get("score"),
         }
         for hit in hits
