@@ -4,7 +4,7 @@ import urllib.parse
 import urllib.request
 import uuid
 import xml.etree.ElementTree as ET
-import datetime
+import datetime as dt
 
 import boto3
 from opensearchpy import OpenSearch, helpers
@@ -78,7 +78,7 @@ model = SentenceTransformer(MODEL_NAME)
 
 
 
-DEFAULT_UNTIL_DATE = datetime.date(2024, 12, 31)
+DEFAULT_UNTIL_DATE = dt.date(2024, 12, 31)
 
 def build_arxiv_url(search_query="", max_results=10, start=0, until_date=DEFAULT_UNTIL_DATE):
     """Build ArXiv API request URL."""
