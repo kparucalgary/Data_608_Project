@@ -58,9 +58,9 @@ model = SentenceTransformer(MODEL_NAME)
 
 
 # --- Streamlit UI ---
-st.set_page_config(page_title="arXiv Semantic Search", layout="wide")
+st.set_page_config(page_title="ORSSA (Open Research Semantic Search Assistant)", layout="wide")
 
-st.title("arXiv Semantic Search Assistant")
+st.title("ORSSA (Open Research Semantic Search Assistant)")
 st.write("Enter a research topic to search for semantically relevant papers.")
 
 with st.form("search_form"):
