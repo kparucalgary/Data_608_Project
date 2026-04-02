@@ -94,7 +94,7 @@ def build_arxiv_url(search_query="", max_results=10, start=0, until_date=DEFAULT
         formatted_date = until_date.strftime("%Y%m%d") + "235959"
         params["search_query"] += f" AND submittedDate:[* TO {formatted_date}]"
 
-    return f"{ARXIV_BASE_URL}?{urllib.parse.urlencode(params)}"
+    return f"{ARXIV_BASE_URL}?{urllib.parse.urlencode(params, quote_via=urllib.parse.quote)}"
 
 def build_oai_url(metadata_prefix="arXiv", until_date=None, resumption_token=None):
     """Build OAI-PMH request URL."""
