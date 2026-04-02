@@ -81,7 +81,7 @@ def build_arxiv_url(search_query="", max_results=10):
             "search_query": 'all:' + search_query,
             "max_results": max_results,
         }
-    return f"{OAI_BASE_URL}?{urllib.parse.urlencode(params)}"
+    return f"{ARXIV_BASE_URL}?{urllib.parse.urlencode(params)}"
 
 def build_oai_url(metadata_prefix="arXiv", until_date=None, resumption_token=None):
     """Build OAI-PMH request URL."""
@@ -98,7 +98,7 @@ def build_oai_url(metadata_prefix="arXiv", until_date=None, resumption_token=Non
         if until_date:
             params["until"] = until_date
 
-    return f"{ARXIV_BASE_URL}?{urllib.parse.urlencode(params)}"
+    return f"{OAI_BASE_URL}?{urllib.parse.urlencode(params)}"
 
 def fetch_oai_page(url):
     """Fetch XML page from arXiv."""
