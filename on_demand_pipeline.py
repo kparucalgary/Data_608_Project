@@ -78,7 +78,7 @@ model = SentenceTransformer(MODEL_NAME)
 def build_arxiv_url(search_query="", max_results=10):
     """Build OAI-PMH request URL."""
     params = {
-            "search_query": search_query,
+            "search_query": 'all:' + search_query,
             "max_results": max_results,
         }
     return f"{OAI_BASE_URL}?{urllib.parse.urlencode(params)}"
