@@ -4,7 +4,7 @@ import urllib.parse
 import urllib.request
 import uuid
 import xml.etree.ElementTree as ET
-import datetime as dt
+
 
 import boto3
 from opensearchpy import OpenSearch, helpers
@@ -40,9 +40,8 @@ ARXIV_BASE_URL = "http://export.arxiv.org/api/query"
 
 
 # Default constraints
-#DEFAULT_UNTIL_DATE = "2024-12-31"
-DEFAULT_MAX_RECORDS = 250
-#500
+DEFAULT_UNTIL_DATE = "2024-12-31"
+DEFAULT_MAX_RECORDS = 250#500
 DEFAULT_TOP_K = 5
 
 # Performance tuning
@@ -78,23 +77,17 @@ model = SentenceTransformer(MODEL_NAME)
 
 
 
-DEFAULT_UNTIL_DATE = dt.date(2024, 12, 31)
+#DEFAULT_UNTIL_DATE = datetime.date(2024, 12, 31)
 
-def build_arxiv_url(search_query="", max_results=10, start=0, until_date=DEFAULT_UNTIL_DATE):
+def build_arxiv_url(search_query="", max_results=10, start=0):
     """Build ArXiv API request URL."""
     params = {
         "search_query": "all:" + search_query,
         "start": start,
-        "max_results": max_results,
+        "max_results": max_results
     }
 
-    if until_date:
-        # ArXiv expects date range in the query string, not as a separate param
-        # Format: submittedDate:[* TO 20240101235959]
-        formatted_date = until_date.strftime("%Y%m%d") + "235959"
-        params["search_query"] += f" AND submittedDate:[* TO {formatted_date}]"
-
-    return f"{ARXIV_BASE_URL}?{urllib.parse.urlencode(params, quote_via=urllib.parse.quote)}"
+    return f"{ARXIV_BASE_URL}?{urllib.parse.urlencode(params)}"
 
 def build_oai_url(metadata_prefix="arXiv", until_date=None, resumption_token=None):
     """Build OAI-PMH request URL."""
@@ -387,7 +380,6 @@ def collect_ondemand_records(max_records, until_date, bucket_name, search_query)
     resumption_token = None
     page_num = 0
     url = build_arxiv_url(search_query, max_records)
-    print(f"DEBUG URL: {url}")
     with urllib.request.urlopen(url) as f:
         xml = f.read()
         
