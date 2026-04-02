@@ -122,7 +122,7 @@ def retrieveNode(state: GraphState) -> GraphState:
                                         ''' + state['queryret0'])
                 queryret = queryret.content
             else:
-                queryret = query + ' application'
+                queryret = query 
             state['queryret1'] = queryret
         elif retry == 2:
             if state['mode'] == 'llm':
@@ -149,41 +149,11 @@ def retrieveNode(state: GraphState) -> GraphState:
                                         state['queryret1'])
                 queryret = queryret.content
             else:
-                queryret = query + ' results'
+                queryret = query.split().join(' OR ')
             state['queryret2'] = queryret
-        elif retry == 3:
-            
-            if state['mode'] == 'llm':
-                queryret = llm.invoke(''''You are a linguistics specialist with 
-                                        20+ years of experience tasked with modifying 
-                                        a query to aid in a 
-                                        semantic search,
-                                        over an academic paper database to 
-                                        find the best and most related results. 
-                                        You are to return only the modified query 
-                                        to retreive the best possible results, 
-                                        with no newlines or explanations of your 
-                                        modification. Do not rely on search 
-                                        keywords such as AND or OR. The goal 
-                                        is not to find papers on semantic 
-                                        search unless that is the query given 
-                                        at the end of this prompt. The goal 
-                                        is to find new papers not found by the 
-                                        initial search. Here is the original 
-                                        prompt: ''' + query + ''' and first 
-                                        modified query: 
-                                        ''' + state['queryret0'] + ''' and here is 
-                                        the second modified query: ''' + 
-                                        state['queryret1'] + ''' and finally here 
-                                        is the third modified query: ''' + 
-                                        state['queryret2'])
-                queryret = queryret.content
-            else:
-                queryret = query + ' success'
-            state['queryret3'] = queryret
             
         
-        results = run_ondemand_pipeline(queryret)
+        results = run_ondemand_pipeline(state['queryret0'], queryret)
         results = results['results']
         for i in results:
             if i['title'] not in state['titles']:
@@ -211,7 +181,7 @@ def checkRelevantPapers(state: GraphState) -> GraphState:
     
     retry = state["retry_count"]
     
-    if retry >= 3:
+    if retry >= 2:
         return {**state, "message": "Max Retries Reached"}
     
     return {**state, "message": f"Insufficient Papers {retry + 1}"}

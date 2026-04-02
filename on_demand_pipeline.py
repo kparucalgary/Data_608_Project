@@ -34,6 +34,10 @@ PASSWORD = "data608ML!!!"
 # arXiv OAI-PMH endpoint
 OAI_BASE_URL = "https://oaipmh.arxiv.org/oai"
 
+# arXiv API endpoint
+ARXIV_BASE_URL = "http://export.arxiv.org/api/query"
+
+
 # Default constraints
 DEFAULT_UNTIL_DATE = "2024-12-31"
 DEFAULT_MAX_RECORDS = 500
@@ -71,6 +75,14 @@ model = SentenceTransformer(MODEL_NAME)
 # ======================
 
 
+def build_arxiv_url(search_query="", max_results=10):
+    """Build OAI-PMH request URL."""
+    params = {
+            "search_query": search_query,
+            "max_results": max_results,
+        }
+    return f"{OAI_BASE_URL}?{urllib.parse.urlencode(params)}"
+
 def build_oai_url(metadata_prefix="arXiv", until_date=None, resumption_token=None):
     """Build OAI-PMH request URL."""
     if resumption_token:
@@ -86,8 +98,7 @@ def build_oai_url(metadata_prefix="arXiv", until_date=None, resumption_token=Non
         if until_date:
             params["until"] = until_date
 
-    return f"{OAI_BASE_URL}?{urllib.parse.urlencode(params)}"
-
+    return f"{ARXIV_BASE_URL}?{urllib.parse.urlencode(params)}"
 
 def fetch_oai_page(url):
     """Fetch XML page from arXiv."""
@@ -133,6 +144,52 @@ def parse_page_metadata(xml_bytes):
         "resumption_token": resumption_token,
         "record_count": len(records),
     }
+'''def parse_page_metadata_arxiv_api(xml_bytes):
+    """Extract pagination metadata."""
+    root = ET.fromstring(xml_bytes)
+
+    response_date = root.findtext(
+        "oai:responseDate",
+        default="",
+        namespaces=NS,
+    )
+
+    token_elem = root.find(".//oai:resumptionToken", NS)
+    resumption_token = (
+        token_elem.text.strip()
+        if token_elem is not None and token_elem.text
+        else None
+    )
+
+    records = root.findall(".//oai:record", NS)
+
+    return {
+        "response_date": response_date,
+        "resumption_token": resumption_token,
+        "record_count": len(records),
+    }
+
+'''
+def parse_arxiv_atom(xml: str):
+    ns = {
+        "atom": "http://www.w3.org/2005/Atom",
+        "arxiv": "http://arxiv.org/schemas/atom"
+    }
+
+    root = ET.fromstring(xml)
+    papers = []
+    for entry in root.findall('atom:entry', ns):
+        raw_id = entry.findtext("atom:id", default="", namespaces=ns).strip()
+        arxiv_id = raw_id.rsplit("/", 1)[-1]
+        title = entry.findtext('atom:title', default='', namespaces=ns).strip()
+        abstract = entry.findtext('atom:summary', default='', namespaces=ns).strip()
+        categories = [
+            c.attrib.get("term", "").strip()
+            for c in entry.findall("atom:category", ns)
+        ]
+        created = entry.findtext('atom:updated', default="", namespaces=ns).strip()
+        papers.append({'arxiv_id': arxiv_id, 'title': title, 'abstract': abstract, 'url': f"https://arxiv.org/abs/{arxiv_id}", 'categories': categories, 'created': created })
+    return papers
 
 
 def parse_arxiv_records(xml_bytes):
@@ -308,21 +365,29 @@ def format_hits_for_app(hits):
 # ======================
 
 
-def collect_ondemand_records(max_records, until_date, bucket_name):
+def collect_ondemand_records(max_records, until_date, bucket_name, search_query):
     """Collect arXiv records on demand and store raw/processed copies in S3."""
     run_time = datetime.now(timezone.utc)
     run_id = uuid.uuid4().hex[:8]
-
+    
     all_records = []
     resumption_token = None
     page_num = 0
-
+    url = build_arxiv_url(search_query, max_records)
+    with urllib.request.urlopen(url) as f:
+        xml = f.read()
+        
+    '''
+            import urllib.request as libreq
+            
+    
+    
     while len(all_records) < max_records:
         url = build_oai_url(
             until_date=until_date if not resumption_token else None,
             resumption_token=resumption_token,
         )
-
+        
         xml = fetch_oai_page(url)
         check_oai_error(xml)
 
@@ -338,7 +403,9 @@ def collect_ondemand_records(max_records, until_date, bucket_name):
         resumption_token = meta["resumption_token"]
         if not resumption_token:
             break
-
+    '''
+    write_raw_xml_to_s3(bucket_name, xml, run_time, page_num, run_id)
+    all_records = parse_arxiv_atom(xml)
     json_key = write_parsed_json_to_s3(bucket_name, all_records, run_time, run_id)
 
     return {
@@ -355,6 +422,7 @@ def collect_ondemand_records(max_records, until_date, bucket_name):
 
 def run_ondemand_pipeline(
     user_query,
+    search_query,
     max_records=DEFAULT_MAX_RECORDS,
     until_date=DEFAULT_UNTIL_DATE,
     top_k=DEFAULT_TOP_K,
@@ -364,7 +432,7 @@ def run_ondemand_pipeline(
     if not user_query.strip():
         raise ValueError("Query cannot be empty")
 
-    data = collect_ondemand_records(max_records, until_date, bucket_name)
+    data = collect_ondemand_records(max_records, until_date, bucket_name, search_query)
     stats = embed_and_index(data["records"])
 
     hits = semantic_search(user_query, top_k)
